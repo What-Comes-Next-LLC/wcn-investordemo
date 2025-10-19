@@ -1,0 +1,178 @@
+/* CatalystStatusWidget.css */
+
+.status-widget {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(33, 104, 105, 0.1);
+  overflow: hidden;
+  border: 2px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.status-widget.online {
+  border-color: #49a078;
+}
+
+.status-widget.offline {
+  border-color: #e76f51;
+}
+
+.status-widget.loading {
+  border-color: #f4a261;
+}
+
+/* Header */
+.status-header {
+  padding: 25px 30px;
+  background: linear-gradient(135deg, #216869 0%, #49a078 100%);
+  color: #f4f4f4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-widget.offline .status-header {
+  background: linear-gradient(135deg, #e76f51 0%, #f4a261 100%);
+}
+
+.status-widget.loading .status-header {
+  background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-dot {
+  font-size: 1.5rem;
+  line-height: 1;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.status-label {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.last-check {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  font-weight: 400;
+}
+
+/* Body */
+.status-body {
+  padding: 30px;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 25px;
+}
+
+.status-metric {
+  text-align: center;
+  padding: 20px;
+  background: #f4f4f4;
+  border-radius: 12px;
+  border: 2px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.status-metric:hover {
+  border-color: #216869;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(33, 104, 105, 0.1);
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: #2d3436;
+  opacity: 0.6;
+  margin-bottom: 10px;
+}
+
+.metric-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #216869;
+  line-height: 1.4;
+}
+
+/* Footer */
+.status-footer {
+  padding: 20px 30px;
+  background: #f4f4f4;
+  border-top: 2px solid #e0e0e0;
+}
+
+.status-note {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #2d3436;
+  text-align: center;
+}
+
+.status-note strong {
+  color: #216869;
+  font-weight: 700;
+}
+
+/* Error State */
+.error-message {
+  text-align: center;
+  padding: 20px;
+  color: #2d3436;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Loading State */
+.status-widget.loading .status-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .status-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-label {
+    font-size: 1.125rem;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .status-dot {
+    animation: none;
+  }
+
+  .status-metric:hover {
+    transform: none;
+  }
+}
