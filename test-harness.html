@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catalyst Demo - Standalone Test</title>
+
+  <!-- React and ReactDOM from CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Component Styles -->
+  <link rel="stylesheet" href="CatalystDemo.css">
+  <link rel="stylesheet" href="CatalystStatusWidget.css">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    #test-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #2d3436;
+      color: #49a078;
+      padding: 0.5rem 1rem;
+      z-index: 9999;
+      font-size: 0.875rem;
+      border-bottom: 2px solid #49a078;
+    }
+
+    #test-header h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    #test-header p {
+      margin: 0.25rem 0 0 0;
+      opacity: 0.8;
+      font-size: 0.75rem;
+    }
+
+    #root {
+      padding-top: 60px;
+    }
+
+    .test-status {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      z-index: 9999;
+    }
+
+    .test-status.success {
+      background: rgba(73, 160, 120, 0.9);
+    }
+
+    .test-status.error {
+      background: rgba(231, 111, 81, 0.9);
+    }
+  </style>
+</head>
+<body>
+  <div id="test-header">
+    <h2>🧪 Phase 1 Standalone Test Environment</h2>
+    <p>Testing Catalyst Demo components independently | Machine: wcn-workbench | API: catalyst-api.whatcomesnextllc.ai</p>
+  </div>
+
+  <div id="root"></div>
+  <div id="test-status" class="test-status">Initializing...</div>
+
+  <!-- CatalystStatusWidget Component -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const CatalystStatusWidget = () => {
+      const [status, setStatus] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [lastUpdate, setLastUpdate] = useState(null);
+
+      // Poll the status endpoint
+      useEffect(() => {
+        const fetchStatus = async () => {
+          try {
+            // This will hit your Cloudflare Tunnel endpoint
+            const response = await fetch('https://catalyst-api.whatcomesnextllc.ai/status');
+
+            if (!response.ok) {
+              throw new Error('Status endpoint unavailable');
+            }
+
+            const data = await response.json();
+            setStatus(data);
+            setError(null);
+            setLastUpdate(new Date());
+            setLoading(false);
+
+            // Update test status indicator
+            const testStatus = document.getElementById('test-status');
+            if (testStatus) {
+              testStatus.className = 'test-status success';
+              testStatus.textContent = `✓ API Connected | Last fetch: ${new Date().toLocaleTimeString()}`;
+            }
+          } catch (err) {
+            console.error('Status fetch failed:', err);
+            setError(err.message);
+            setLoading(false);
+
+            // Update test status indicator
+            const testStatus = document.getElementById('test-status');
+            if (testStatus) {
+              testStatus.className = 'test-status error';
+              testStatus.textContent = `✗ API Error: ${err.message}`;
+            }
+          }
+        };
+
+        // Fetch immediately
+        fetchStatus();
+
+        // Poll every 30 seconds
+        const interval = setInterval(fetchStatus, 30000);
+
+        // Cleanup
+        return () => clearInterval(interval);
+      }, []);
+
+      // Format time ago
+      const timeAgo = (timestamp) => {
+        if (!timestamp) return 'Unknown';
+
+        const now = new Date();
+        const then = new Date(timestamp);
+        const diffMs = now - then;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+        if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+        return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+      };
+
+      if (loading) {
+        return (
+          <div className="status-widget loading">
+            <div className="status-header">
+              <h3>Checking infrastructure status...</h3>
+            </div>
+          </div>
+        );
+      }
+
+      if (error) {
+        return (
+          <div className="status-widget offline">
+            <div className="status-header">
+              <div className="status-indicator offline">
+                <span className="status-dot">🔴</span>
+                <span className="status-label">Offline</span>
+              </div>
+            </div>
+            <div className="status-body">
+              <p className="error-message">
+                Demo infrastructure temporarily offline. Watch the video walkthrough above
+                to see how it works.
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      const isOnline = status?.status === 'online';
+
+      return (
+        <div className={`status-widget ${isOnline ? 'online' : 'offline'}`}>
+          <div className="status-header">
+            <div className={`status-indicator ${isOnline ? 'online' : 'offline'}`}>
+              <span className="status-dot">{isOnline ? '🟢' : '🔴'}</span>
+              <span className="status-label">
+                {isOnline ? 'Infrastructure Online' : 'Offline'}
+              </span>
+            </div>
+
+            {lastUpdate && (
+              <div className="last-check">
+                Last checked: {lastUpdate.toLocaleTimeString()}
+              </div>
+            )}
+          </div>
+
+          <div className="status-body">
+            <div className="status-grid">
+              <div className="status-metric">
+                <div className="metric-label">Last Processed</div>
+                <div className="metric-value">
+                  {timeAgo(status?.last_processed)}
+                </div>
+              </div>
+
+              <div className="status-metric">
+                <div className="metric-label">Hardware</div>
+                <div className="metric-value">
+                  {status?.hardware || 'GTX 1060 6GB'}
+                </div>
+              </div>
+
+              <div className="status-metric">
+                <div className="metric-label">Location</div>
+                <div className="metric-value">
+                  {status?.location || 'Michigan'}
+                </div>
+              </div>
+
+              <div className="status-metric">
+                <div className="metric-label">Avg Processing Time</div>
+                <div className="metric-value">
+                  {status?.avg_processing_time || '~60 seconds'}
+                </div>
+              </div>
+
+              {status?.queue_depth !== undefined && (
+                <div className="status-metric">
+                  <div className="metric-label">Current Queue</div>
+                  <div className="metric-value">
+                    {status.queue_depth} {status.queue_depth === 1 ? 'job' : 'jobs'}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="status-footer">
+            <p className="status-note">
+              <strong>Live Infrastructure:</strong> This status is polled from actual
+              hardware every 30 seconds. When you see "Online," the Catalyst pipeline
+              is ready to process Sparks.
+            </p>
+          </div>
+        </div>
+      );
+    };
+
+    // CatalystDemo Component (Simplified for testing)
+    const CatalystDemo = () => {
+      const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+
+      return (
+        <div className="catalyst-demo-page">
+          {/* Hero Section */}
+          <section className="hero-section">
+            <div className="hero-content">
+              <div className="logo-lockup">
+                <img src="./assets/What Comes Next.svg" alt="What Comes Next" className="wcn-logo" />
+                <h1 className="hero-title">The Catalyst</h1>
+                <p className="hero-subtitle">Privacy-First Behavioral Intelligence</p>
+              </div>
+
+              <p className="hero-description">
+                Watch how we extract structured insights from voice notes using
+                local LLM infrastructure. No cloud APIs. No data harvesting.
+                Just your hardware, your data, your intelligence.
+              </p>
+            </div>
+          </section>
+
+          {/* The Proof Section - Status Widget */}
+          <section className="proof-section">
+            <div className="section-header">
+              <h2>This Isn't a Mock Demo</h2>
+              <p>The status below is live. This infrastructure is running right now.</p>
+            </div>
+
+            <CatalystStatusWidget />
+
+            <div className="proof-explanation">
+              <p>
+                Every time someone tests the demo, you'll see the "Last Processed"
+                timestamp update. The hardware specs are real. The location is real.
+                This is the infrastructure that powers The Catalyst backend for
+                privacy-first behavioral intelligence.
+              </p>
+            </div>
+          </section>
+
+          {/* Product Ecosystem */}
+          <section className="ecosystem-section">
+            <div className="section-header">
+              <h2>The Product Ecosystem</h2>
+              <p>The Catalyst is one piece of a larger behavioral intelligence platform</p>
+            </div>
+
+            <div className="ecosystem-grid">
+              <div className="product-card">
+                <img src="./assets/The Spark.svg" alt="The Spark" className="product-logo" />
+                <h3>The Spark</h3>
+                <p>Voice-first client interface for capturing behavioral moments in real-time</p>
+              </div>
+
+              <div className="product-card highlight">
+                <img src="./assets/What Comes Next.svg" alt="The Catalyst" className="product-logo" />
+                <h3>The Catalyst</h3>
+                <p>Local LLM pipeline transforming voice notes into structured behavioral intelligence</p>
+              </div>
+
+              <div className="product-card">
+                <img src="./assets/Coach's Clipboard.svg" alt="Coach's Clipboard" className="product-logo" />
+                <h3>Coach's Clipboard</h3>
+                <p>Obsidian-powered dashboard for coaches to track progress and refine strategies</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Footer */}
+          <footer className="demo-footer">
+            <div className="footer-content">
+              <p>&copy; 2025 What Comes Next, LLC</p>
+              <p className="footer-tagline">Privacy by architecture, not policy.</p>
+            </div>
+          </footer>
+        </div>
+      );
+    };
+
+    // Render the app
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<CatalystDemo />);
+
+    console.log('✓ Test harness initialized');
+    console.log('✓ React components mounted');
+    console.log('✓ API polling started (30s interval)');
+  </script>
+</body>
+</html>

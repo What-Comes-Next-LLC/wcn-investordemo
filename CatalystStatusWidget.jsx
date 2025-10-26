@@ -12,7 +12,7 @@ const CatalystStatusWidget = () => {
     const fetchStatus = async () => {
       try {
         // This will hit your Cloudflare Tunnel endpoint
-        const response = await fetch('https://api.evolutions.whatcomesnextllc.ai/status');
+        const response = await fetch('https://catalyst-api.whatcomesnextllc.ai/status');
         
         if (!response.ok) {
           throw new Error('Status endpoint unavailable');
